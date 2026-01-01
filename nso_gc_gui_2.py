@@ -163,11 +163,55 @@ class NSO_GC_Controller_App:
         # Load saved settings
         self.load_settings()
         
+        # Setup Theme
+        self.setup_theme()
+
         # Build UI
         self.setup_ui()
         
         # Start UI update loop
         self.update_ui()
+    
+    def setup_theme(self):
+        """Configure a sleek dark theme."""
+        style = ttk.Style()
+        
+        # Use 'clam' as base if available for better customization
+        if 'clam' in style.theme_names():
+            style.theme_use('clam')
+            
+        # Colors
+        self.bg_color = "#2b2b3b"
+        self.fg_color = "#e0e0e0"
+        self.accent_color = "#4a4a6a"
+        self.select_color = "#6a6a8a"
+        self.active_color = "#3b3b4b"
+        self.canvas_bg = "#1a1a2e"
+        
+        self.root.configure(bg=self.bg_color)
+        
+        # Configure styles
+        style.configure(".", background=self.bg_color, foreground=self.fg_color, font=("Segoe UI", 10))
+        style.configure("TFrame", background=self.bg_color)
+        style.configure("TLabelframe", background=self.bg_color, foreground=self.fg_color, bordercolor=self.accent_color)
+        style.configure("TLabelframe.Label", background=self.bg_color, foreground="#a0a0c0", font=("Segoe UI", 10, "bold"))
+        
+        style.configure("TLabel", background=self.bg_color, foreground=self.fg_color)
+        style.configure("TButton", background=self.accent_color, foreground="white", borderwidth=1, focuscolor=self.select_color)
+        style.map("TButton", background=[("active", self.select_color), ("disabled", "#404040")], foreground=[("disabled", "#808080")])
+        
+        style.configure("TNotebook", background=self.bg_color, borderwidth=0)
+        style.configure("TNotebook.Tab", background=self.active_color, foreground="#a0a0a0", padding=[15, 5], borderwidth=0)
+        style.map("TNotebook.Tab", background=[("selected", self.accent_color)], foreground=[("selected", "white")])
+        
+        style.configure("Horizontal.TProgressbar", background="#00aa00", troughcolor=self.active_color, bordercolor=self.bg_color, lightcolor="#00aa00", darkcolor="#00aa00")
+        style.configure("Horizontal.TScale", background=self.bg_color, troughcolor=self.active_color, sliderthickness=15)
+        
+        # Custom styles
+        style.configure("Status.TLabel", font=("Segoe UI", 10, "bold"))
+        style.configure("Header.TLabel", font=("Segoe UI", 12, "bold"), foreground="#ffffff")
+        style.configure("Big.TLabel", font=("Courier New", 12, "bold"))
+        style.configure("Card.TFrame", background=self.active_color, relief="flat")
     
     def setup_ui(self):
         """Build the user interface."""
@@ -197,90 +241,114 @@ class NSO_GC_Controller_App:
     
     def setup_main_tab(self):
         """Setup the main controller visualization tab."""
-        # Connection frame
-        conn_frame = ttk.LabelFrame(self.main_tab, text="Connection", padding=10)
-        conn_frame.pack(fill="x", padx=10, pady=5)
+        # Main container with padding
+        main_container = ttk.Frame(self.main_tab, padding=20)
+        main_container.pack(fill="both", expand=True)
         
-        self.status_label = ttk.Label(conn_frame, text="Status: Disconnected", foreground="red")
-        self.status_label.pack(side="left")
+        # Top section: Connection and Emulation side-by-side
+        top_frame = ttk.Frame(main_container)
+        top_frame.pack(fill="x", pady=(0, 20))
+        
+        # Connection Card
+        conn_frame = ttk.LabelFrame(top_frame, text="Connection", padding=15)
+        conn_frame.pack(side="left", fill="both", expand=True, padx=(0, 10))
+        
+        self.status_label = ttk.Label(conn_frame, text="Status: Disconnected", foreground="#ff5555", style="Status.TLabel")
+        self.status_label.pack(anchor="w", pady=(0, 5))
         
         self.packet_label = ttk.Label(conn_frame, text="Packets: 0")
-        self.packet_label.pack(side="left", padx=20)
+        self.packet_label.pack(anchor="w", pady=(0, 10))
         
-        self.connect_btn = ttk.Button(conn_frame, text="Connect", command=self.toggle_connection)
-        self.connect_btn.pack(side="right")
+        self.connect_btn = ttk.Button(conn_frame, text="Connect", command=self.toggle_connection, width=15)
+        self.connect_btn.pack(anchor="w")
         
-        # Emulation frame
-        emu_frame = ttk.LabelFrame(self.main_tab, text="Xbox 360 Emulation", padding=10)
-        emu_frame.pack(fill="x", padx=10, pady=5)
+        # Emulation Card
+        emu_frame = ttk.LabelFrame(top_frame, text="Xbox 360 Emulation", padding=15)
+        emu_frame.pack(side="left", fill="both", expand=True, padx=(10, 0))
         
-        self.emu_status = ttk.Label(emu_frame, text="Emulation: Off", foreground="gray")
-        self.emu_status.pack(side="left")
+        self.emu_status = ttk.Label(emu_frame, text="Emulation: Off", foreground="#888888", style="Status.TLabel")
+        self.emu_status.pack(anchor="w", pady=(0, 5))
         
-        self.emu_btn = ttk.Button(emu_frame, text="Start Emulation", command=self.toggle_emulation)
-        self.emu_btn.pack(side="right")
+        info_lbl = ttk.Label(emu_frame, text="Emulates Xbox 360 controller via ViGEmBus")
+        info_lbl.pack(anchor="w", pady=(0, 10))
+        
+        self.emu_btn = ttk.Button(emu_frame, text="Start Emulation", command=self.toggle_emulation, width=15)
+        self.emu_btn.pack(anchor="w")
         
         if not VGAMEPAD_AVAILABLE:
             self.emu_btn.config(state="disabled")
-            self.emu_status.config(text="vgamepad not installed", foreground="red")
+            self.emu_status.config(text="vgamepad not installed", foreground="#ff5555")
         
-        # Visualization frame
-        viz_frame = ttk.LabelFrame(self.main_tab, text="Live Input", padding=10)
-        viz_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        # Visualization Card
+        viz_frame = ttk.LabelFrame(main_container, text="Live Input", padding=15)
+        viz_frame.pack(fill="both", expand=True)
         
         # Canvas for stick visualization
-        self.canvas = tk.Canvas(viz_frame, width=500, height=250, bg="#1a1a2e")
+        self.canvas = tk.Canvas(viz_frame, width=600, height=250, bg=self.canvas_bg, highlightthickness=0)
         self.canvas.pack(pady=10)
+        
+        # Values display
+        val_frame = ttk.Frame(viz_frame)
+        val_frame.pack(fill="x", pady=10)
+        
+        # Use a grid for values for better alignment
+        for i in range(6):
+            val_frame.columnconfigure(i, weight=1)
+            
+        self.lx_label = ttk.Label(val_frame, text="LX: 0.00", font=("Consolas", 10))
+        self.lx_label.grid(row=0, column=0)
+        self.ly_label = ttk.Label(val_frame, text="LY: 0.00", font=("Consolas", 10))
+        self.ly_label.grid(row=0, column=1)
+        self.cx_label = ttk.Label(val_frame, text="CX: 0.00", font=("Consolas", 10))
+        self.cx_label.grid(row=0, column=2)
+        self.cy_label = ttk.Label(val_frame, text="CY: 0.00", font=("Consolas", 10))
+        self.cy_label.grid(row=0, column=3)
+        self.lt_label = ttk.Label(val_frame, text="LT: 0%", font=("Consolas", 10))
+        self.lt_label.grid(row=0, column=4)
+        self.rt_label = ttk.Label(val_frame, text="RT: 0%", font=("Consolas", 10))
+        self.rt_label.grid(row=0, column=5)
         
         # Buttons display
         btn_frame = ttk.Frame(viz_frame)
-        btn_frame.pack(fill="x", pady=5)
+        btn_frame.pack(fill="x", pady=15)
         
         self.btn_labels = {}
         buttons = ["A", "B", "X", "Y", "Z", "Start", "Home", "Scrn", "Chat", "L", "R", "ZL", 
                    "↑", "↓", "←", "→"]
+        
+        # Center the button grid
+        btn_inner_frame = ttk.Frame(btn_frame)
+        btn_inner_frame.pack(anchor="center")
+        
         for i, btn in enumerate(buttons):
-            lbl = ttk.Label(btn_frame, text=f" {btn} ", background="gray", width=5)
-            lbl.grid(row=i // 8, column=i % 8, padx=2, pady=2)
+            # Create a frame for each button to give it a border/background
+            f = tk.Frame(btn_inner_frame, bg="#3b3b4b", padx=1, pady=1)
+            f.grid(row=i // 8, column=i % 8, padx=4, pady=4)
+            
+            lbl = tk.Label(f, text=btn, bg="#3b3b4b", fg="#aaaaaa", width=6, height=2, font=("Segoe UI", 9, "bold"))
+            lbl.pack()
             self.btn_labels[btn] = lbl
         
-        # Values display
-        val_frame = ttk.Frame(viz_frame)
-        val_frame.pack(fill="x", pady=5)
-        
-        self.lx_label = ttk.Label(val_frame, text="LX: 0.00")
-        self.lx_label.grid(row=0, column=0, padx=10)
-        self.ly_label = ttk.Label(val_frame, text="LY: 0.00")
-        self.ly_label.grid(row=0, column=1, padx=10)
-        self.cx_label = ttk.Label(val_frame, text="CX: 0.00")
-        self.cx_label.grid(row=0, column=2, padx=10)
-        self.cy_label = ttk.Label(val_frame, text="CY: 0.00")
-        self.cy_label.grid(row=0, column=3, padx=10)
-        self.lt_label = ttk.Label(val_frame, text="LT: 0%")
-        self.lt_label.grid(row=0, column=4, padx=10)
-        self.rt_label = ttk.Label(val_frame, text="RT: 0%")
-        self.rt_label.grid(row=0, column=5, padx=10)
-        
-        # Raw values
-        raw_frame = ttk.Frame(viz_frame)
-        raw_frame.pack(fill="x", pady=5)
-        
-        self.raw_label = ttk.Label(raw_frame, text="Raw: --", font=("Courier", 9))
-        self.raw_label.pack()
+        # Raw values (hidden by default or small)
+        self.raw_label = ttk.Label(viz_frame, text="Raw: --", font=("Consolas", 8), foreground="#666666")
+        self.raw_label.pack(side="bottom", pady=5)
     
     def setup_calibration_tab(self):
         """Setup the calibration tab."""
+        container = ttk.Frame(self.cal_tab, padding=20)
+        container.pack(fill="both", expand=True)
+        
         # Instructions
-        inst_frame = ttk.LabelFrame(self.cal_tab, text="Instructions", padding=10)
-        inst_frame.pack(fill="x", padx=10, pady=5)
+        inst_frame = ttk.LabelFrame(container, text="Instructions", padding=15)
+        inst_frame.pack(fill="x", pady=(0, 15))
         
         ttk.Label(inst_frame, text="Calibrate each axis by moving it to its extremes.\n"
                   "This helps correct for stick drift and ensures full range of motion.",
-                  wraplength=700).pack()
+                  wraplength=700, justify="left").pack(anchor="w")
         
         # Current calibration values
-        val_frame = ttk.LabelFrame(self.cal_tab, text="Current Calibration Values", padding=10)
-        val_frame.pack(fill="x", padx=10, pady=5)
+        val_frame = ttk.LabelFrame(container, text="Current Calibration Values", padding=15)
+        val_frame.pack(fill="x", pady=(0, 15))
         
         self.cal_labels = {}
         axes = [
@@ -293,68 +361,71 @@ class NSO_GC_Controller_App:
         ]
         
         for i, (name, key, bits) in enumerate(axes):
-            ttk.Label(val_frame, text=f"{name} ({bits}):").grid(row=i, column=0, sticky="w", padx=5, pady=2)
-            lbl = ttk.Label(val_frame, text="Min: --- Center: --- Max: ---")
+            ttk.Label(val_frame, text=f"{name} ({bits}):", width=20).grid(row=i, column=0, sticky="w", padx=5, pady=2)
+            lbl = ttk.Label(val_frame, text="Min: --- Center: --- Max: ---", font=("Consolas", 10))
             lbl.grid(row=i, column=1, sticky="w", padx=5, pady=2)
             self.cal_labels[key] = lbl
         
         self.update_calibration_display()
         
         # Calibration wizard
-        wiz_frame = ttk.LabelFrame(self.cal_tab, text="Calibration Wizard", padding=10)
-        wiz_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        wiz_frame = ttk.LabelFrame(container, text="Calibration Wizard", padding=15)
+        wiz_frame.pack(fill="both", expand=True)
         
         self.cal_instruction = ttk.Label(wiz_frame, text="Connect controller and click an axis to calibrate",
-                                          font=("Arial", 12))
+                                          font=("Segoe UI", 12), foreground="#ffffff")
         self.cal_instruction.pack(pady=10)
         
         self.cal_progress = ttk.Progressbar(wiz_frame, length=400, mode='determinate')
         self.cal_progress.pack(pady=10)
         
-        self.cal_value_label = ttk.Label(wiz_frame, text="Current value: ---", font=("Courier", 11))
+        self.cal_value_label = ttk.Label(wiz_frame, text="Current value: ---", font=("Consolas", 11))
         self.cal_value_label.pack(pady=5)
         
         # Calibration buttons
         cal_btn_frame = ttk.Frame(wiz_frame)
-        cal_btn_frame.pack(pady=10)
+        cal_btn_frame.pack(pady=15)
         
-        ttk.Button(cal_btn_frame, text="Left Stick X", 
-                   command=lambda: self.start_calibration("left_x")).grid(row=0, column=0, padx=5, pady=5)
-        ttk.Button(cal_btn_frame, text="Left Stick Y", 
-                   command=lambda: self.start_calibration("left_y")).grid(row=0, column=1, padx=5, pady=5)
-        ttk.Button(cal_btn_frame, text="C-Stick X", 
-                   command=lambda: self.start_calibration("c_x")).grid(row=0, column=2, padx=5, pady=5)
-        ttk.Button(cal_btn_frame, text="C-Stick Y", 
-                   command=lambda: self.start_calibration("c_y")).grid(row=0, column=3, padx=5, pady=5)
-        ttk.Button(cal_btn_frame, text="L Trigger", 
-                   command=lambda: self.start_calibration("l_trigger")).grid(row=1, column=0, padx=5, pady=5)
-        ttk.Button(cal_btn_frame, text="R Trigger", 
-                   command=lambda: self.start_calibration("r_trigger")).grid(row=1, column=1, padx=5, pady=5)
+        buttons = [
+            ("Left Stick X", "left_x", 0, 0),
+            ("Left Stick Y", "left_y", 0, 1),
+            ("C-Stick X", "c_x", 0, 2),
+            ("C-Stick Y", "c_y", 0, 3),
+            ("L Trigger", "l_trigger", 1, 0),
+            ("R Trigger", "r_trigger", 1, 1),
+        ]
         
-        ttk.Button(cal_btn_frame, text="Reset to Defaults", 
+        for text, cmd_arg, r, c in buttons:
+            ttk.Button(cal_btn_frame, text=text, width=15,
+                       command=lambda arg=cmd_arg: self.start_calibration(arg)).grid(row=r, column=c, padx=5, pady=5)
+        
+        ttk.Button(cal_btn_frame, text="Reset to Defaults", width=20,
                    command=self.reset_calibration).grid(row=1, column=2, columnspan=2, padx=5, pady=5)
     
     def setup_deadzone_tab(self):
         """Setup the dead zone adjustment tab."""
+        container = ttk.Frame(self.dz_tab, padding=20)
+        container.pack(fill="both", expand=True)
+        
         # Instructions
-        inst_frame = ttk.LabelFrame(self.dz_tab, text="Dead Zones", padding=10)
-        inst_frame.pack(fill="x", padx=10, pady=5)
+        inst_frame = ttk.LabelFrame(container, text="Dead Zones", padding=15)
+        inst_frame.pack(fill="x", pady=(0, 15))
         
         ttk.Label(inst_frame, text="Dead zones prevent small stick movements from registering.\n"
                   "Increase if you experience drift, decrease for more precision.",
-                  wraplength=700).pack()
+                  wraplength=700, justify="left").pack(anchor="w")
         
         # Sliders
-        slider_frame = ttk.LabelFrame(self.dz_tab, text="Adjust Dead Zones", padding=10)
-        slider_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        slider_frame = ttk.LabelFrame(container, text="Adjust Dead Zones", padding=15)
+        slider_frame.pack(fill="x", pady=(0, 15))
         
         # Left Stick
         ttk.Label(slider_frame, text="Left Stick Dead Zone:").grid(row=0, column=0, sticky="w", pady=10)
         self.left_dz_var = tk.DoubleVar(value=self.calibration.left_stick_deadzone)
         self.left_dz_slider = ttk.Scale(slider_frame, from_=0, to=0.5, variable=self.left_dz_var,
                                          orient="horizontal", length=300, command=self.update_deadzone)
-        self.left_dz_slider.grid(row=0, column=1, padx=10)
-        self.left_dz_label = ttk.Label(slider_frame, text=f"{self.calibration.left_stick_deadzone:.0%}")
+        self.left_dz_slider.grid(row=0, column=1, padx=20, sticky="ew")
+        self.left_dz_label = ttk.Label(slider_frame, text=f"{self.calibration.left_stick_deadzone:.0%}", width=5)
         self.left_dz_label.grid(row=0, column=2)
         
         # C-Stick
@@ -362,8 +433,8 @@ class NSO_GC_Controller_App:
         self.c_dz_var = tk.DoubleVar(value=self.calibration.c_stick_deadzone)
         self.c_dz_slider = ttk.Scale(slider_frame, from_=0, to=0.5, variable=self.c_dz_var,
                                       orient="horizontal", length=300, command=self.update_deadzone)
-        self.c_dz_slider.grid(row=1, column=1, padx=10)
-        self.c_dz_label = ttk.Label(slider_frame, text=f"{self.calibration.c_stick_deadzone:.0%}")
+        self.c_dz_slider.grid(row=1, column=1, padx=20, sticky="ew")
+        self.c_dz_label = ttk.Label(slider_frame, text=f"{self.calibration.c_stick_deadzone:.0%}", width=5)
         self.c_dz_label.grid(row=1, column=2)
         
         # Triggers
@@ -371,40 +442,45 @@ class NSO_GC_Controller_App:
         self.trig_dz_var = tk.DoubleVar(value=self.calibration.trigger_deadzone)
         self.trig_dz_slider = ttk.Scale(slider_frame, from_=0, to=0.3, variable=self.trig_dz_var,
                                          orient="horizontal", length=300, command=self.update_deadzone)
-        self.trig_dz_slider.grid(row=2, column=1, padx=10)
-        self.trig_dz_label = ttk.Label(slider_frame, text=f"{self.calibration.trigger_deadzone:.0%}")
+        self.trig_dz_slider.grid(row=2, column=1, padx=20, sticky="ew")
+        self.trig_dz_label = ttk.Label(slider_frame, text=f"{self.calibration.trigger_deadzone:.0%}", width=5)
         self.trig_dz_label.grid(row=2, column=2)
         
-        # Visualization
-        viz_frame = ttk.LabelFrame(self.dz_tab, text="Dead Zone Visualization", padding=10)
-        viz_frame.pack(fill="x", padx=10, pady=5)
+        slider_frame.columnconfigure(1, weight=1)
         
-        self.dz_canvas = tk.Canvas(viz_frame, width=400, height=150, bg="#1a1a2e")
+        # Visualization
+        viz_frame = ttk.LabelFrame(container, text="Dead Zone Visualization", padding=15)
+        viz_frame.pack(fill="both", expand=True)
+        
+        self.dz_canvas = tk.Canvas(viz_frame, width=400, height=150, bg=self.canvas_bg, highlightthickness=0)
         self.dz_canvas.pack(pady=10)
     
     def setup_settings_tab(self):
         """Setup the settings tab."""
+        container = ttk.Frame(self.settings_tab, padding=20)
+        container.pack(fill="both", expand=True)
+        
         # Controller address
-        addr_frame = ttk.LabelFrame(self.settings_tab, text="Controller Address", padding=10)
-        addr_frame.pack(fill="x", padx=10, pady=5)
+        addr_frame = ttk.LabelFrame(container, text="Controller Address", padding=15)
+        addr_frame.pack(fill="x", pady=(0, 15))
         
         ttk.Label(addr_frame, text="Bluetooth Address:").pack(side="left")
         self.addr_var = tk.StringVar(value=self.controller_address)
-        self.addr_entry = ttk.Entry(addr_frame, textvariable=self.addr_var, width=25)
+        self.addr_entry = ttk.Entry(addr_frame, textvariable=self.addr_var, width=25, font=("Consolas", 10))
         self.addr_entry.pack(side="left", padx=10)
         ttk.Button(addr_frame, text="Scan", command=self.scan_for_controller).pack(side="left")
         
         # Save/Load
-        file_frame = ttk.LabelFrame(self.settings_tab, text="Settings File", padding=10)
-        file_frame.pack(fill="x", padx=10, pady=5)
+        file_frame = ttk.LabelFrame(container, text="Settings File", padding=15)
+        file_frame.pack(fill="x", pady=(0, 15))
         
-        ttk.Button(file_frame, text="Save Settings", command=self.save_settings).pack(side="left", padx=5)
-        ttk.Button(file_frame, text="Load Settings", command=self.load_settings_dialog).pack(side="left", padx=5)
-        ttk.Button(file_frame, text="Reset All", command=self.reset_all_settings).pack(side="left", padx=5)
+        ttk.Button(file_frame, text="Save Settings", command=self.save_settings).pack(side="left", padx=(0, 10))
+        ttk.Button(file_frame, text="Load Settings", command=self.load_settings_dialog).pack(side="left", padx=(0, 10))
+        ttk.Button(file_frame, text="Reset All", command=self.reset_all_settings).pack(side="left")
         
         # Button mapping info
-        map_frame = ttk.LabelFrame(self.settings_tab, text="Button Mapping (Xbox 360)", padding=10)
-        map_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        map_frame = ttk.LabelFrame(container, text="Button Mapping (Xbox 360)", padding=15)
+        map_frame.pack(fill="both", expand=True)
         
         mapping_text = """
         GameCube          Xbox 360
@@ -424,7 +500,8 @@ class NSO_GC_Controller_App:
         C-Stick       →   Right Stick
         """
         
-        ttk.Label(map_frame, text=mapping_text, font=("Courier", 10), justify="left").pack()
+        lbl = ttk.Label(map_frame, text=mapping_text, font=("Consolas", 10), justify="left", foreground="#cccccc")
+        lbl.pack(anchor="center")
     
     def update_calibration_display(self):
         """Update the calibration values display."""
@@ -775,18 +852,18 @@ class NSO_GC_Controller_App:
     
     def connection_success(self):
         """Handle successful connection."""
-        self.status_label.config(text="Status: Connected", foreground="green")
+        self.status_label.config(text="Status: Connected", foreground="#55ff55")
         self.connect_btn.config(text="Disconnect", state="normal")
     
     def connection_failed(self, error):
         """Handle connection failure."""
-        self.status_label.config(text=f"Status: Failed", foreground="red")
+        self.status_label.config(text=f"Status: Failed", foreground="#ff5555")
         self.connect_btn.config(text="Connect", state="normal")
         messagebox.showerror("Connection Error", f"Failed to connect: {error}")
     
     def disconnected(self):
         """Handle disconnection."""
-        self.status_label.config(text="Status: Disconnected", foreground="red")
+        self.status_label.config(text="Status: Disconnected", foreground="#ff5555")
         self.connect_btn.config(text="Connect", state="normal")
     
     def toggle_emulation(self):
@@ -800,7 +877,7 @@ class NSO_GC_Controller_App:
                 self.gamepad.reset()
                 self.gamepad.update()
                 self.gamepad = None
-            self.emu_status.config(text="Emulation: Off", foreground="gray")
+            self.emu_status.config(text="Emulation: Off", foreground="#888888")
             self.emu_btn.config(text="Start Emulation")
         else:
             if not self.connected:
@@ -810,7 +887,7 @@ class NSO_GC_Controller_App:
             try:
                 self.gamepad = vg.VX360Gamepad()
                 self.emulating = True
-                self.emu_status.config(text="Emulation: Active", foreground="green")
+                self.emu_status.config(text="Emulation: Active", foreground="#55ff55")
                 self.emu_btn.config(text="Stop Emulation")
             except Exception as e:
                 messagebox.showerror("Emulation Error", f"Failed to create virtual controller: {e}")
@@ -845,7 +922,9 @@ class NSO_GC_Controller_App:
         
         for btn, pressed in btn_map.items():
             if btn in self.btn_labels:
-                self.btn_labels[btn].config(background="green" if pressed else "gray")
+                bg_color = "#00aa00" if pressed else "#3b3b4b"
+                fg_color = "#ffffff" if pressed else "#aaaaaa"
+                self.btn_labels[btn].config(bg=bg_color, fg=fg_color)
         
         # Update calibration display if calibrating
         if self.calibrating and self.calibration_samples:
@@ -864,22 +943,22 @@ class NSO_GC_Controller_App:
         self.canvas.delete("all")
         
         # Left stick
-        self.draw_stick_circle(100, 125, 80, self.state.left_stick_x, self.state.left_stick_y, 
+        self.draw_stick_circle(150, 125, 80, self.state.left_stick_x, self.state.left_stick_y, 
                                self.calibration.left_stick_deadzone, "Left Stick")
         
         # C-Stick
-        self.draw_stick_circle(300, 125, 80, self.state.c_stick_x, self.state.c_stick_y,
+        self.draw_stick_circle(350, 125, 80, self.state.c_stick_x, self.state.c_stick_y,
                                self.calibration.c_stick_deadzone, "C-Stick")
         
         # Triggers (spaced apart to avoid overlap)
-        self.draw_trigger_bar(420, 50, 30, 150, self.state.l_trigger, "L")
-        self.draw_trigger_bar(460, 50, 30, 150, self.state.r_trigger, "R")
+        self.draw_trigger_bar(480, 50, 30, 150, self.state.l_trigger, "L")
+        self.draw_trigger_bar(530, 50, 30, 150, self.state.r_trigger, "R")
     
     def draw_stick_circle(self, cx, cy, radius, x, y, deadzone, label):
         """Draw a single stick visualization."""
         # Outer circle
         self.canvas.create_oval(cx - radius, cy - radius, cx + radius, cy + radius,
-                                outline="#4a4a6a", width=2)
+                                outline="#5a5a8a", width=2)
 
         # Deadzone circle
         dz_radius = radius * deadzone
@@ -887,8 +966,8 @@ class NSO_GC_Controller_App:
                                 outline="#6a4a4a", width=1, dash=(2, 2))
 
         # Crosshairs
-        self.canvas.create_line(cx - radius, cy, cx + radius, cy, fill="#3a3a5a")
-        self.canvas.create_line(cx, cy - radius, cx, cy + radius, fill="#3a3a5a")
+        self.canvas.create_line(cx - radius, cy, cx + radius, cy, fill="#4a4a7a")
+        self.canvas.create_line(cx, cy - radius, cx, cy + radius, fill="#4a4a7a")
 
         # Stick position - grey when in deadzone, green when active
         stick_x = cx + (x * radius * 0.9)
@@ -896,24 +975,24 @@ class NSO_GC_Controller_App:
 
         # Check if stick is within deadzone (output is 0 when in deadzone)
         in_deadzone = (x == 0.0 and y == 0.0)
-        fill_color = "#808080" if in_deadzone else "#00ff00"
-        outline_color = "#606060" if in_deadzone else "#00aa00"
+        fill_color = "#555555" if in_deadzone else "#00cc00"
+        outline_color = "#777777" if in_deadzone else "#00aa00"
 
         self.canvas.create_oval(stick_x - 8, stick_y - 8, stick_x + 8, stick_y + 8,
                                 fill=fill_color, outline=outline_color)
 
         # Label
-        self.canvas.create_text(cx, cy + radius + 15, text=label, fill="white")
+        self.canvas.create_text(cx, cy + radius + 20, text=label, fill="#e0e0e0", font=("Segoe UI", 10))
     
     def draw_trigger_bar(self, x, y, width, height, value, label):
         """Draw a trigger bar visualization."""
         # Background
-        self.canvas.create_rectangle(x, y, x + width, y + height, outline="#4a4a6a", width=2)
+        self.canvas.create_rectangle(x, y, x + width, y + height, outline="#5a5a8a", width=2)
 
         # Fill - grey when in deadzone (value is 0), green when active
         fill_height = height * value
         in_deadzone = (value == 0.0)
-        fill_color = "#808080" if in_deadzone else "#00ff00"
+        fill_color = "#555555" if in_deadzone else "#00cc00"
 
         # Show a small bar even when in deadzone to indicate trigger position
         if in_deadzone:
@@ -925,7 +1004,7 @@ class NSO_GC_Controller_App:
                                           fill=fill_color, outline="")
 
         # Label
-        self.canvas.create_text(x + width // 2, y + height + 15, text=label, fill="white")
+        self.canvas.create_text(x + width // 2, y + height + 20, text=label, fill="#e0e0e0", font=("Segoe UI", 10))
     
     def draw_deadzone_viz(self):
         """Draw deadzone visualization."""
@@ -936,28 +1015,28 @@ class NSO_GC_Controller_App:
         radius = 60
         
         self.dz_canvas.create_oval(cx - radius, cy - radius, cx + radius, cy + radius,
-                                    outline="#4a4a6a", width=2)
+                                    outline="#5a5a8a", width=2)
         
         dz = self.calibration.left_stick_deadzone
         dz_radius = radius * dz
         self.dz_canvas.create_oval(cx - dz_radius, cy - dz_radius, cx + dz_radius, cy + dz_radius,
                                     fill="#4a2a2a", outline="#8a4a4a")
         
-        self.dz_canvas.create_text(cx, cy + radius + 15, text=f"Stick DZ: {dz:.0%}", fill="white")
+        self.dz_canvas.create_text(cx, cy + radius + 15, text=f"Stick DZ: {dz:.0%}", fill="#e0e0e0")
         
         # Draw trigger deadzone
         tx, ty = 250, 25
         t_width, t_height = 30, 100
         
         self.dz_canvas.create_rectangle(tx, ty, tx + t_width, ty + t_height,
-                                         outline="#4a4a6a", width=2)
+                                         outline="#5a5a8a", width=2)
         
         tdz = self.calibration.trigger_deadzone
         dz_height = t_height * tdz
         self.dz_canvas.create_rectangle(tx + 2, ty + t_height - dz_height, tx + t_width - 2, ty + t_height - 2,
                                          fill="#4a2a2a", outline="")
         
-        self.dz_canvas.create_text(tx + t_width // 2, ty + t_height + 15, text=f"Trig DZ: {tdz:.0%}", fill="white")
+        self.dz_canvas.create_text(tx + t_width // 2, ty + t_height + 15, text=f"Trig DZ: {tdz:.0%}", fill="#e0e0e0")
     
     def scan_for_controller(self):
         """Scan for Nintendo controllers."""

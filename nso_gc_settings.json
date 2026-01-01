@@ -1,0 +1,24 @@
+{
+  "controller_address": "3C:A9:AB:5F:70:B1",
+  "calibration": {
+    "left_x_min": 839,
+    "left_x_center": 2018,
+    "left_x_max": 3279,
+    "left_y_min": 53,
+    "left_y_center": 134,
+    "left_y_max": 207,
+    "c_x_min": 1031,
+    "c_x_center": 2152,
+    "c_x_max": 3269,
+    "c_y_min": 58,
+    "c_y_center": 132,
+    "c_y_max": 200,
+    "l_trigger_min": 30,
+    "l_trigger_max": 230,
+    "r_trigger_min": 30,
+    "r_trigger_max": 230,
+    "left_stick_deadzone": 0.05,
+    "c_stick_deadzone": 0.05,
+    "trigger_deadzone": 0.02
+  }
+}
