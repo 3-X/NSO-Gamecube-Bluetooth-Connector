@@ -12,7 +12,14 @@ Use your Nintendo Switch Online GameCube controller as an Xbox 360 controller on
 
 ## Download
 
-**[Download NSO_GC_Controller_Setup.exe](./installer_output/NSO_GC_Controller_Setup.exe)**
+### Assets
+
+| File | Description |
+|------|-------------|
+| [**NSO_GC_Controller_Setup.exe**](https://github.com/jschultz299/NSO-GC-Adapter/releases/latest/download/NSO_GC_Controller_Setup.exe) | Windows Installer (recommended) |
+| [**NSO_GC_Controller.exe**](https://github.com/jschultz299/NSO-GC-Adapter/releases/latest/download/NSO_GC_Controller.exe) | Standalone executable (portable) |
+
+> See all versions on the [Releases](https://github.com/jschultz299/NSO-GC-Adapter/releases) page
 
 ## Requirements
 
