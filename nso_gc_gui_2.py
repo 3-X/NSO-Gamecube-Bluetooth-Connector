@@ -23,6 +23,37 @@ from dataclasses import dataclass, asdict
 from typing import Optional
 from bleak import BleakClient, BleakScanner
 
+def check_vigem_installed():
+    """Check if ViGEmBus driver is installed."""
+    import winreg
+    try:
+        # Check for ViGEmBus in registry
+        key = winreg.OpenKey(
+            winreg.HKEY_LOCAL_MACHINE,
+            r"SOFTWARE\Nefarius Software Solutions e.U.\ViGEm Bus Driver"
+        )
+        winreg.CloseKey(key)
+        return True
+    except WindowsError:
+        pass
+
+    # Alternative check: look for the service
+    try:
+        import subprocess
+        result = subprocess.run(
+            ["sc", "query", "ViGEmBus"],
+            capture_output=True,
+            text=True,
+            creationflags=subprocess.CREATE_NO_WINDOW
+        )
+        return "RUNNING" in result.stdout or "STOPPED" in result.stdout
+    except Exception:
+        pass
+
+    return False
+
+VIGEM_INSTALLED = check_vigem_installed()
+
 try:
     import vgamepad as vg
     VGAMEPAD_AVAILABLE = True
@@ -30,6 +61,10 @@ except ImportError:
     VGAMEPAD_AVAILABLE = False
     print("Warning: vgamepad not installed. Xbox emulation disabled.")
     print("Install with: pip install vgamepad")
+except Exception as e:
+    # ViGEmBus not installed causes vgamepad to fail
+    VGAMEPAD_AVAILABLE = False
+    print(f"Warning: vgamepad failed to load: {e}")
 
 # Controller BLE address (can be changed in GUI)
 DEFAULT_CONTROLLER_ADDRESS = "3C:A9:AB:5F:70:B1"
@@ -277,7 +312,10 @@ class NSO_GC_Controller_App:
         
         if not VGAMEPAD_AVAILABLE:
             self.emu_btn.config(state="disabled")
-            self.emu_status.config(text="vgamepad not installed", foreground="#ff5555")
+            if not VIGEM_INSTALLED:
+                self.emu_status.config(text="ViGEmBus driver not installed", foreground="#ff5555")
+            else:
+                self.emu_status.config(text="vgamepad not installed", foreground="#ff5555")
         
         # Visualization Card
         viz_frame = ttk.LabelFrame(main_container, text="Live Input", padding=15)
@@ -1142,7 +1180,40 @@ class NSO_GC_Controller_App:
         self.root.destroy()
 
 
+def show_vigem_missing_dialog():
+    """Show a dialog explaining ViGEmBus is required."""
+    import webbrowser
+
+    root = tk.Tk()
+    root.withdraw()  # Hide main window
+
+    message = (
+        "ViGEmBus driver is not installed!\n\n"
+        "This driver is required for Xbox 360 controller emulation.\n\n"
+        "Would you like to open the download page?\n\n"
+        "After installing ViGEmBus, restart this application."
+    )
+
+    result = messagebox.askyesno(
+        "ViGEmBus Required",
+        message,
+        icon="warning"
+    )
+
+    if result:
+        webbrowser.open("https://github.com/nefarius/ViGEmBus/releases/latest")
+
+    root.destroy()
+    return result
+
+
 def main():
+    # Check for ViGEmBus before starting
+    if not VIGEM_INSTALLED:
+        show_vigem_missing_dialog()
+        # Continue anyway - user can still use the app for input visualization
+        # but emulation will be disabled
+
     root = tk.Tk()
     app = NSO_GC_Controller_App(root)
     root.protocol("WM_DELETE_WINDOW", app.on_close)
