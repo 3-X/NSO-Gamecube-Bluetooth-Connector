@@ -1,4 +1,4 @@
-# NSO GameCube Controller - Xbox 360 Emulator
+# NSO GameCube Controller -> Xbox 360 Controller Emulator
 
 Use your Nintendo Switch Online GameCube controller as an Xbox 360 controller on Windows via Bluetooth.
 
